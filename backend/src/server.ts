@@ -12,8 +12,7 @@ import transcribeRouter from "./routes/transcribe.js";
 import githubRouter from "./routes/github.js";          // ← ADD
 
 const defaultOrigins = [
-  "https://advanced-rag-pipeline.vercel.app",
-  "https://advanced-rag-pipeline-git-test-joinwithyogesh17-9788s-projects.vercel.app",
+  "https://oracle-beta-woad.vercel.app",
   "http://localhost:5173"
 ];
 const origins =
