@@ -12,7 +12,7 @@ import transcribeRouter from "./routes/transcribe.js";
 import githubRouter from "./routes/github.js";          // ← ADD
 
 const defaultOrigins = [
-  "https://oracle-beta-woad.vercel.app",
+  "https://oracle-lyart-six.vercel.app",
   "http://localhost:5173"
 ];
 const origins =
