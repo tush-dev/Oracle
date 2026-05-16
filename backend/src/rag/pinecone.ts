@@ -5,7 +5,7 @@ const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY!,
 });
 
-const index = pinecone.index("rag-index");
+const index = pinecone.index("oracle");
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
