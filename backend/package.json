@@ -1,0 +1,40 @@
+{
+  "name": "rag",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc -b && nodemon dist/server.js",
+    "build": "tsc -b",
+    "start": "node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.2.8",
+    "@langchain/textsplitters": "^1.0.1",
+    "@pinecone-database/pinecone": "^7.1.0",
+    "@supabase/supabase-js": "^2.103.0",
+    "axios": "^1.15.0",
+    "cohere-ai": "^8.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "form-data": "^4.0.5",
+    "groq-sdk": "^1.1.2",
+    "multer": "^2.1.1",
+    "node-fetch": "^3.3.2",
+    "pdf-parse-fork": "^1.2.0",
+    "pdf2json": "^4.0.2"
+  }
+}
