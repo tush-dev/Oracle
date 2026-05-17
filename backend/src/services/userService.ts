@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase.js";
 const emailCache = new Map<string, { email: string; exp: number }>();
 const CACHE_MS = 120_000;
 
+// Cache Clerk primary email lookups briefly to reduce API calls during auth flows.
 function getClerk() {
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey) {
@@ -14,6 +15,10 @@ function getClerk() {
   return createClerkClient({ secretKey });
 }
 
+/**
+ * Resolve the primary email address for a Clerk user.
+ * Cached values remain valid for a short period to avoid repeated Clerk calls.
+ */
 export async function getPrimaryEmail(clerkUserId: string): Promise<string> {
   const now = Date.now();
   const hit = emailCache.get(clerkUserId);
@@ -65,6 +70,7 @@ export async function ensureSupabaseUser(
     email: email || null,
   });
 
+  // Handle rare race conditions where the same Clerk user may be inserted concurrently.
   if (insErr?.code === "23505") {
     const { data: retry, error: rErr } = await supabase
       .from("users")
