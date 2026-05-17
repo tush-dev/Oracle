@@ -23,6 +23,7 @@ export async function getUserGithubToken(
 
 const STATE_TTL_MS = 10 * 60 * 1000;
 
+// The OAuth state payload is signed with a shared secret to guard against CSRF.
 function stateSecret(): string {
   const s =
     process.env.GITHUB_OAUTH_STATE_SECRET ?? process.env.CLERK_SECRET_KEY;
@@ -30,6 +31,7 @@ function stateSecret(): string {
   return s;
 }
 
+// Validate required GitHub OAuth environment variables before building request URLs.
 function githubEnv() {
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
