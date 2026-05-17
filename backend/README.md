@@ -2,6 +2,8 @@
 
 This directory contains the backend server for the Oracle RAG assistant.
 
+> Backend routes live under `backend/src/routes` and are organized to support document ingestion, GitHub indexing, chat history, and audio workflows.
+
 ## Overview
 
 The backend handles:
