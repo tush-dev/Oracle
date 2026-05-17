@@ -1,1 +1,19 @@
-{"type":"module","dependencies":{"axios":"^1.15.0","dotenv":"^17.4.2","fs":"^0.0.1-security","fs-extra":"^11.3.4","openai":"^6.34.0","path":"^0.12.7"}}
+{
+  "name": "oracle",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Oracle full-stack RAG assistant repository",
+  "scripts": {
+    "install": "echo 'Install dependencies in backend and frontend separately'",
+    "validate": "echo 'Use backend and frontend package scripts directly'"
+  },
+  "dependencies": {
+    "axios": "^1.15.0",
+    "dotenv": "^17.4.2",
+    "fs": "^0.0.1-security",
+    "fs-extra": "^11.3.4",
+    "openai": "^6.34.0",
+    "path": "^0.12.7"
+  }
+}
