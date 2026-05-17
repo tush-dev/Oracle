@@ -1,6 +1,7 @@
 {
-  "name": "rag",
+  "name": "oracle-backend",
   "version": "1.0.0",
+  "description": "Backend server for the Oracle RAG assistant",
   "main": "index.js",
   "type": "module",
   "scripts": {
