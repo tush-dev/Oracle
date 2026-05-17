@@ -8,6 +8,8 @@ The backend handles ingestion, chunking, embeddings, hybrid retrieval, reranking
 
 Ready to deploy? See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete guides on deploying to Vercel, Render, Railway, and more.
 
+For backend-specific setup, see `backend/.env.example` and `backend/README.md`.
+
 ## RAG Pipeline
 
 1. Documents and repository files are parsed into clean text.
@@ -80,6 +82,7 @@ frontend/src/lib       frontend API and source utilities
 
 ```bash
 cd backend
+cp .env.example .env
 npm install
 npm run build
 npm run dev
@@ -92,3 +95,5 @@ npm run dev
 ```
 
 Copy `backend/.env.example` to `backend/.env` and fill in the provider keys before running the backend.
+
+See `CONTRIBUTING.md` for guidance on commit style and incremental documentation updates.
