@@ -1,6 +1,19 @@
-# React + TypeScript + Vite
+# Oracle Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This frontend is built with React, TypeScript, and Vite for the Oracle RAG assistant.
+
+The app connects to the backend API, handles GitHub OAuth flow, and provides a chat-based interface for retrieving grounded answers.
+
+## Local setup
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Use `frontend/.env.example` to configure any frontend-specific environment variables.
 
 Currently, two official plugins are available:
 
