@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [backend, frontend]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: |
+          npm install
+      - name: Build backend
+        if: matrix.project == 'backend'
+        run: |
+          cd backend
+          npm install
+          npm run build
+      - name: Build frontend
+        if: matrix.project == 'frontend'
+        run: |
+          cd frontend
+          npm install
+          npm run build
