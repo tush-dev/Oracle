@@ -97,3 +97,5 @@ npm run dev
 Copy `backend/.env.example` to `backend/.env` and fill in the provider keys before running the backend.
 
 See `CONTRIBUTING.md` for guidance on commit style and incremental documentation updates.
+
+The repository includes a build validation workflow at `.github/workflows/nodejs-ci.yml` and a license file at `LICENSE`.
