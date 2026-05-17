@@ -2,8 +2,12 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { supabase } from "../lib/supabase.js";
 import { ensureSupabaseUser, getPrimaryEmail } from "./userService.js";
 
+/**
+ * Fetch the stored GitHub access token for the given Supabase user ID.
+ * The user ID here is the internal Supabase UUID, not the Clerk user ID.
+ */
 export async function getUserGithubToken(
-  userId: string   // ← this is supabase UUID
+  userId: string,
 ): Promise<string | null> {
 
   console.log("🔍 Looking for token with supabase userId:", userId)
@@ -24,6 +28,7 @@ export async function getUserGithubToken(
 const STATE_TTL_MS = 10 * 60 * 1000;
 
 // The OAuth state payload is signed with a shared secret to guard against CSRF.
+// Uses GITHUB_OAUTH_STATE_SECRET if provided, otherwise falls back to the Clerk secret.
 function stateSecret(): string {
   const s =
     process.env.GITHUB_OAUTH_STATE_SECRET ?? process.env.CLERK_SECRET_KEY;
@@ -44,6 +49,10 @@ function githubEnv() {
   return { clientId, clientSecret, redirectUri };
 }
 
+/**
+ * Build the GitHub OAuth authorization URL for the current Clerk user.
+ * The request state is signed to protect against CSRF and replay attacks.
+ */
 export function buildAuthorizeUrl(clerkUserId: string): string {
   const { clientId, redirectUri } = githubEnv();
   const payload = Buffer.from(
