@@ -30,8 +30,6 @@ interface Props {
   message: string
   file: File | null
   fileName: string
-  charCount: number
-  chatId: string | null
   isStreaming: boolean
   focused: boolean
   signedIn: boolean
@@ -55,7 +53,6 @@ interface Props {
   onRemoveFile: () => void
   onIndexRepo: (url: string) => void
   onDeleteSource: (source: string) => Promise<void>
-  historyLength: number
   githubConnected: boolean
   githubLogin: string | null
   loadingGitHub: boolean
@@ -242,8 +239,6 @@ export const InputBar = ({
   message,
   file,
   fileName,
-  charCount,
-  chatId,
   isStreaming,
   focused,
   signedIn,
@@ -267,7 +262,6 @@ export const InputBar = ({
   onRemoveFile,
   onIndexRepo,
   onDeleteSource,
-  historyLength,
   githubConnected,
   githubLogin,
   loadingGitHub,
@@ -449,54 +443,6 @@ export const InputBar = ({
           />
         )}
       </AnimatePresence>
-
-      <div className="flex flex-wrap items-center gap-2 px-1 font-mono text-[10px] text-muted-foreground">
-        <span>
-          <span className="text-accent">{historyLength}</span> exchanges
-        </span>
-        <span className="h-1 w-1 rounded-full bg-border" />
-        <span className={file ? "text-success" : ""}>
-          {file
-            ? `📎 ${fileName.slice(0, 16)}${fileName.length > 16 ? "…" : ""}`
-            : "No document"}
-        </span>
-        <span className="h-1 w-1 rounded-full bg-border" />
-        <span className={charCount > 200 ? "text-destructive" : ""}>{charCount} chars</span>
-        <span className="h-1 w-1 rounded-full bg-border" />
-        <span className={chatId ? "text-accent" : ""}>
-          {chatId ? "Chat active" : "New session"}
-        </span>
-        <AnimatePresence>
-          {(isRecording || isTranscribing) && (
-            <motion.span
-              className="ml-auto flex items-center gap-1.5 text-destructive"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-            >
-              <motion.span
-                className="h-1.5 w-1.5 rounded-full bg-destructive"
-                animate={{ opacity: [1, 0.2, 1] }}
-                transition={{ repeat: Infinity, duration: 1 }}
-              />
-              {isRecording ? "recording…" : "transcribing…"}
-            </motion.span>
-          )}
-        </AnimatePresence>
-        <AnimatePresence>
-          {isIndexing && (
-            <motion.span
-              className="ml-auto flex items-center gap-1.5 text-indigo-400"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-            >
-              <Loader2 className="h-3 w-3 animate-spin" />
-              indexing…
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
 
       <AnimatePresence>
         {recError && (

@@ -46,7 +46,6 @@ const ChatPage = () => {
   const [response, setResponse] = useState("")
   const [isStreaming, setIsStreaming] = useState(false)
   const [focused, setFocused] = useState(false)
-  const [charCount, setCharCount] = useState(0)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [currentQ, setCurrentQ] = useState("")
   const [chatId, setChatId] = useState<string | null>(null)
@@ -142,7 +141,6 @@ const ChatPage = () => {
       setFile(null)
       setFileName("")
       setMessage("")
-      setCharCount(0)
       setSidebarOpen(false)
     } catch {
       /* ignore */
@@ -284,7 +282,6 @@ const ChatPage = () => {
     setChatId(null)
     setHistory([])
     setMessage("")
-    setCharCount(0)
     setFile(null)
     setFileName("")
     setResponse("")
@@ -334,7 +331,6 @@ const ChatPage = () => {
     if (selectedSource !== "all") fd.append("filterSource", selectedSource)
 
     setMessage("")
-    setCharCount(0)
     setFile(null)
     setFileName("")
     setIsStreaming(true)
@@ -429,13 +425,10 @@ const ChatPage = () => {
           message={message}
           file={file}
           fileName={fileName}
-          charCount={charCount}
-          chatId={chatId}
           isStreaming={isStreaming}
           focused={focused}
           signedIn={signedIn}
           inputRef={inputRef}
-          historyLength={history.length}
           documents={documents}
           selectedSource={selectedSource}
           loadingDocs={loadingDocs}
@@ -446,7 +439,6 @@ const ChatPage = () => {
           onSourceChange={setSelectedSource}
           onChange={(val) => {
             setMessage(val)
-            setCharCount(val.length)
           }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
