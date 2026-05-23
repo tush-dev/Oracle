@@ -110,6 +110,73 @@
     background: var(--panel-strong);
     box-shadow: var(--shadow-float);
   }
+
+  .oracle-answer p + p,
+  .oracle-answer p + .oracle-code,
+  .oracle-answer .oracle-code + p {
+    margin-top: 0.75rem;
+  }
+
+  .oracle-code pre {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+  }
+
+  .oracle-code code {
+    display: block;
+    min-width: max-content;
+    color: #d7e2f2;
+    font-family: var(--font-mono);
+    white-space: pre;
+  }
+
+  .oracle-code .hljs-keyword,
+  .oracle-code .hljs-selector-tag,
+  .oracle-code .hljs-built_in,
+  .oracle-code .hljs-name {
+    color: #8fb4ff;
+  }
+
+  .oracle-code .hljs-title,
+  .oracle-code .hljs-title.class_,
+  .oracle-code .hljs-title.function_ {
+    color: #f2c76e;
+  }
+
+  .oracle-code .hljs-string,
+  .oracle-code .hljs-attr,
+  .oracle-code .hljs-symbol,
+  .oracle-code .hljs-bullet {
+    color: #8ee3b4;
+  }
+
+  .oracle-code .hljs-number,
+  .oracle-code .hljs-literal,
+  .oracle-code .hljs-variable,
+  .oracle-code .hljs-template-variable {
+    color: #d7a2ff;
+  }
+
+  .oracle-code .hljs-comment,
+  .oracle-code .hljs-quote {
+    color: #7f8ea3;
+    font-style: italic;
+  }
+
+  .oracle-code .hljs-meta,
+  .oracle-code .hljs-operator,
+  .oracle-code .hljs-punctuation,
+  .oracle-code .hljs-tag {
+    color: #9fd6ff;
+  }
+
+  .oracle-code .hljs-deletion {
+    color: #ff9a9a;
+  }
+
+  .oracle-code .hljs-addition {
+    color: #8ee3b4;
+  }
 }
 
 /* Clerk portals render on document.body — ensure readable text in dark mode */

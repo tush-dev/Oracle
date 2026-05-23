@@ -1,5 +1,23 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { FileText, Mic, Search } from "lucide-react"
+import hljs from "highlight.js/lib/core"
+import bash from "highlight.js/lib/languages/bash"
+import cpp from "highlight.js/lib/languages/cpp"
+import csharp from "highlight.js/lib/languages/csharp"
+import css from "highlight.js/lib/languages/css"
+import go from "highlight.js/lib/languages/go"
+import java from "highlight.js/lib/languages/java"
+import javascript from "highlight.js/lib/languages/javascript"
+import json from "highlight.js/lib/languages/json"
+import markdown from "highlight.js/lib/languages/markdown"
+import php from "highlight.js/lib/languages/php"
+import python from "highlight.js/lib/languages/python"
+import ruby from "highlight.js/lib/languages/ruby"
+import rust from "highlight.js/lib/languages/rust"
+import sql from "highlight.js/lib/languages/sql"
+import typescript from "highlight.js/lib/languages/typescript"
+import xml from "highlight.js/lib/languages/xml"
+import yaml from "highlight.js/lib/languages/yaml"
 import { GithubIcon } from "./icons/GithubIcon"
 
 interface HistoryItem {
@@ -38,6 +56,139 @@ const CAPABILITIES: {
     github: true,
   },
 ]
+
+hljs.registerLanguage("bash", bash)
+hljs.registerLanguage("cpp", cpp)
+hljs.registerLanguage("csharp", csharp)
+hljs.registerLanguage("css", css)
+hljs.registerLanguage("go", go)
+hljs.registerLanguage("java", java)
+hljs.registerLanguage("javascript", javascript)
+hljs.registerLanguage("json", json)
+hljs.registerLanguage("markdown", markdown)
+hljs.registerLanguage("php", php)
+hljs.registerLanguage("python", python)
+hljs.registerLanguage("ruby", ruby)
+hljs.registerLanguage("rust", rust)
+hljs.registerLanguage("sql", sql)
+hljs.registerLanguage("typescript", typescript)
+hljs.registerLanguage("xml", xml)
+hljs.registerLanguage("yaml", yaml)
+
+type AnswerPart =
+  | { type: "text"; value: string }
+  | { type: "code"; value: string; language?: string }
+
+const fencePattern = /```([^\n`]*)\n?([\s\S]*?)```/g
+
+function parseAnswer(answer: string): AnswerPart[] {
+  const parts: AnswerPart[] = []
+  let cursor = 0
+
+  for (const match of answer.matchAll(fencePattern)) {
+    const index = match.index ?? 0
+    if (index > cursor) {
+      parts.push({ type: "text", value: answer.slice(cursor, index) })
+    }
+    parts.push({
+      type: "code",
+      language: match[1]?.trim().split(/\s+/)[0],
+      value: match[2]?.replace(/\n$/, "") ?? "",
+    })
+    cursor = index + match[0].length
+  }
+
+  if (cursor < answer.length) {
+    parts.push({ type: "text", value: answer.slice(cursor) })
+  }
+
+  return parts.length ? parts : [{ type: "text", value: answer }]
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+function highlightCode(code: string, language?: string) {
+  const lang = language?.toLowerCase()
+
+  try {
+    if (lang && hljs.getLanguage(lang)) {
+      const result = hljs.highlight(code, {
+        language: lang,
+        ignoreIllegals: true,
+      })
+      return { html: result.value, language: result.language ?? lang }
+    }
+
+    const result = hljs.highlightAuto(code)
+    return {
+      html: result.value,
+      language: result.language ?? language ?? "code",
+    }
+  } catch {
+    return { html: escapeHtml(code), language: language ?? "code" }
+  }
+}
+
+function CodeBlock({ code, language }: { code: string; language?: string }) {
+  const highlighted = highlightCode(code, language)
+
+  return (
+    <div className="oracle-code my-3 overflow-hidden rounded-xl border border-border bg-[#0b1020] shadow-sm">
+      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.04] px-3 py-2">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+          {highlighted.language}
+        </span>
+        <span className="h-2 w-2 rounded-full bg-accent/80 shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_55%,transparent)]" />
+      </div>
+      <pre className="m-0 max-w-full overflow-x-auto p-3.5 text-left text-[12px] leading-relaxed sm:text-[13px]">
+        <code
+          className={`hljs language-${highlighted.language}`}
+          dangerouslySetInnerHTML={{ __html: highlighted.html }}
+        />
+      </pre>
+    </div>
+  )
+}
+
+function AnswerContent({ text, streaming }: { text: string; streaming?: boolean }) {
+  const parts = parseAnswer(text)
+  const lastPart = parts[parts.length - 1]
+
+  return (
+    <div className="oracle-answer text-sm leading-relaxed text-foreground/90">
+      {parts.map((part, index) =>
+        part.type === "code" ? (
+          <CodeBlock key={index} code={part.value} language={part.language} />
+        ) : part.value ? (
+          <p key={index} className="m-0 whitespace-pre-wrap">
+            {part.value}
+            {streaming && index === parts.length - 1 && (
+              <motion.span
+                className="ml-0.5 inline-block h-3.5 w-0.5 translate-y-0.5 rounded-sm bg-accent"
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+              />
+            )}
+          </p>
+        ) : null
+      )}
+      {streaming && lastPart?.type === "code" && (
+        <motion.span
+          className="ml-0.5 inline-block h-3.5 w-0.5 translate-y-0.5 rounded-sm bg-accent"
+          animate={{ opacity: [1, 0] }}
+          transition={{ duration: 0.5, repeat: Infinity }}
+        />
+      )}
+    </div>
+  )
+}
 
 export const MessageList = ({
   history,
@@ -138,9 +289,7 @@ export const MessageList = ({
               <span className="mb-2 block font-mono text-[9px] tracking-[0.2em] text-accent/70">
                 ORACLE
               </span>
-              <p className="m-0 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                {item.a}
-              </p>
+              <AnswerContent text={item.a} />
             </div>
           </div>
         </motion.div>
@@ -212,14 +361,7 @@ export const MessageList = ({
                     ))}
                   </div>
                 ) : (
-                  <p className="m-0 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                    {response}
-                    <motion.span
-                      className="ml-0.5 inline-block h-3.5 w-0.5 translate-y-0.5 rounded-sm bg-accent"
-                      animate={{ opacity: [1, 0] }}
-                      transition={{ duration: 0.5, repeat: Infinity }}
-                    />
-                  </p>
+                  <AnswerContent text={response} streaming />
                 )}
               </div>
             </div>
