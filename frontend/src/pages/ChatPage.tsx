@@ -13,9 +13,33 @@ import { useIsMobile } from "../hooks/useIsMobile"
 import { useTheme } from "../context/theme"
 
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:3009"
-const ACTIVE_CHAT_STORAGE_KEY = "oracle.activeChatId"
 
-const getSavedActiveChatId = () => localStorage.getItem(ACTIVE_CHAT_STORAGE_KEY)
+const CHAT_QUERY_KEY = "chat"
+
+const getUrlChatId = () => new URLSearchParams(window.location.search).get(CHAT_QUERY_KEY)
+
+const replaceUrlParams = (params: URLSearchParams) => {
+  const query = params.toString()
+  window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`)
+}
+
+const setChatUrl = (nextChatId: string | null) => {
+  const params = new URLSearchParams(window.location.search)
+  if (nextChatId) {
+    params.set(CHAT_QUERY_KEY, nextChatId)
+  } else {
+    params.delete(CHAT_QUERY_KEY)
+  }
+  replaceUrlParams(params)
+}
+
+const clearTransientUrlParams = () => {
+  const params = new URLSearchParams(window.location.search)
+  const hadTransientParams = params.has("github") || params.has("github_error")
+  params.delete("github")
+  params.delete("github_error")
+  if (hadTransientParams) replaceUrlParams(params)
+}
 
 interface HistoryItem {
   q: string
@@ -58,13 +82,13 @@ const ChatPage = () => {
   const [focused, setFocused] = useState(false)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [currentQ, setCurrentQ] = useState("")
-  const [chatId, setChatId] = useState<string | null>(() => getSavedActiveChatId())
+  const [chatId, setChatId] = useState<string | null>(() => getUrlChatId())
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [workspaceSidebarOpen, setWorkspaceSidebarOpen] = useState(false)
   const [chats, setChats] = useState<Chat[]>([])
   const [loadingChats, setLoadingChats] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
-  const [restoringChat, setRestoringChat] = useState(() => Boolean(getSavedActiveChatId()))
+  const [restoringChat, setRestoringChat] = useState(() => Boolean(getUrlChatId()))
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedSource, setSelectedSource] = useState<string>("all")
   const [loadingDocs, setLoadingDocs] = useState(false)
@@ -142,12 +166,9 @@ const ChatPage = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get("github") === "connected") {
-      window.history.replaceState({}, "", window.location.pathname)
       void fetchGithubStatus()
     }
-    if (params.get("github_error")) {
-      window.history.replaceState({}, "", window.location.pathname)
-    }
+    clearTransientUrlParams()
   }, [])
 
   const fetchChats = async () => {
@@ -197,7 +218,7 @@ const ChatPage = () => {
         )
       )
       setChatId(selectedChatId)
-      localStorage.setItem(ACTIVE_CHAT_STORAGE_KEY, selectedChatId)
+      setChatUrl(selectedChatId)
       setFile(null)
       setFileName("")
       setMessage("")
@@ -207,9 +228,9 @@ const ChatPage = () => {
       }
       return true
     } catch {
-      if (localStorage.getItem(ACTIVE_CHAT_STORAGE_KEY) === selectedChatId) {
-        localStorage.removeItem(ACTIVE_CHAT_STORAGE_KEY)
-      }
+      if (getUrlChatId() === selectedChatId) setChatUrl(null)
+      setChatId(null)
+      setHistory([])
       return false
     } finally {
       setLoadingMessages(false)
@@ -220,12 +241,12 @@ const ChatPage = () => {
   useEffect(() => {
     if (!signedIn || restoredChatRef.current || history.length > 0) return
 
-    const savedChatId = getSavedActiveChatId()
-    if (!savedChatId) return
+    const urlChatId = getUrlChatId()
+    if (!urlChatId) return
 
     restoredChatRef.current = true
     setRestoringChat(true)
-    void loadChat(savedChatId, { closeSidebars: false })
+    void loadChat(urlChatId, { closeSidebars: false })
   }, [signedIn, chatId, history.length])
 
   const deleteChat = async (id: string, e: React.MouseEvent) => {
@@ -396,7 +417,7 @@ const ChatPage = () => {
     currentResponseRef.current = ""
     setCurrentQ("")
     setSelectedSource("all")
-    localStorage.removeItem(ACTIVE_CHAT_STORAGE_KEY)
+    setChatUrl(null)
     setRestoringChat(false)
     workspaceActivatedRef.current = false
     setWorkspaceSidebarOpen(false)
@@ -457,7 +478,7 @@ const ChatPage = () => {
 
       if (res.data?.chatId && !chatId) {
         setChatId(res.data.chatId)
-        localStorage.setItem(ACTIVE_CHAT_STORAGE_KEY, res.data.chatId)
+        setChatUrl(res.data.chatId)
         if (sidebarOpen) void fetchChats()
       }
       typewriterStream(text, q)
