@@ -1,7 +1,7 @@
 import { dark } from "@clerk/themes"
 import type { Theme } from "@/context/theme"
 
-const ACCENT = "#c9a84c"
+const ACCENT = "#38bdf8"
 const ACCENT_FG = "#08080a"
 
 /** Clerk modal, UserButton popover, and UserProfile — synced with app light/dark themes. */
@@ -63,7 +63,7 @@ export function getClerkAppearance(theme: Theme) {
       formButtonPrimary: {
         backgroundColor: primary,
         color: primaryFg,
-        "&:hover": { backgroundColor: isDark ? "#b89940" : "#285f62" },
+        "&:hover": { backgroundColor: isDark ? "#0ea5e9" : "#285f62" },
       },
       formFieldLabel: { color: textMuted },
       formFieldInput: { color: text },
