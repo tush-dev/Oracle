@@ -18,6 +18,7 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.5.2",
+    "nodemon": "^3.1.14",
     "typescript": "^6.0.2"
   },
   "dependencies": {

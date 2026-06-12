@@ -72,6 +72,14 @@ function selectFacetEvidence(resultGroups: Awaited<ReturnType<typeof searchPinec
 
 const pdf = async (req: Request, res: Response) => {
   try {
+    console.log("========== /query request ==========")
+    console.log("BODY:", req.body)
+    console.log("FILE FIELD:", req.file ? {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    } : null)
+    console.log("===================================")
     const file   = req.file
     const query  = req.body.query
     const userId = req.supabaseUserId!
@@ -82,7 +90,11 @@ const pdf = async (req: Request, res: Response) => {
     const filterBefore = req.body.filterBefore as number | undefined
 
     if (!query || !query.trim()) {
-      return res.status(400).json({ error: "No query provided." })
+      console.error("❌ Query missing. BODY received:", req.body)
+      return res.status(400).json({
+        error: "No query provided.",
+        receivedBody: req.body,
+      })
     }
 
     const metadataFilter: MetadataFilter | undefined = (() => {
@@ -101,6 +113,7 @@ const pdf = async (req: Request, res: Response) => {
 
     // ── Process uploaded file if present ────────────────────
     if (file && file.buffer) {
+      console.log(`📄 Processing file: ${file.originalname} (${file.size} bytes)`)
       let text: string
 
       try {
