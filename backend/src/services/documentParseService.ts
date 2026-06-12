@@ -25,10 +25,14 @@ interface LlamaParseJobResponse {
 }
 
 interface LlamaParseResultResponse {
-  status?: string;
-  error?: string;
+  job?: {
+    status?: string;
+    error_message?: string | null;
+  };
   text?: string | { pages?: { text?: string }[] };
   markdown?: string | { pages?: { markdown?: string }[] };
+  text_full?: string;
+  markdown_full?: string;
 }
 
 function isPdf(mimeType: string, fileName: string): boolean {
@@ -47,6 +51,8 @@ function getLlamaCloudApiKey(): string {
 }
 
 function extractMarkdownOrText(data: LlamaParseResultResponse): string {
+  if (typeof data.markdown_full === "string") return data.markdown_full.trim();
+  if (typeof data.text_full === "string") return data.text_full.trim();
   if (typeof data.markdown === "string") return data.markdown.trim();
 
   const markdownPages = data.markdown?.pages
@@ -64,6 +70,22 @@ function extractMarkdownOrText(data: LlamaParseResultResponse): string {
   return "";
 }
 
+function describeLlamaParseError(error: unknown): string {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error.message : "Unknown LlamaParse error";
+  }
+
+  const detail = error.response?.data?.detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item: any) => item?.msg)
+      .filter((message: unknown): message is string => typeof message === "string");
+    if (messages.length) return messages.join("; ");
+  }
+
+  return `LlamaParse request failed with status ${error.response?.status ?? "unknown"}`;
+}
+
 async function parseWithLlamaParse(
   fileBuffer: Buffer,
   fileName: string,
@@ -76,59 +98,73 @@ async function parseWithLlamaParse(
     filename: fileName,
     contentType: mimeType || "application/octet-stream",
   });
-  formData.append("purpose", "parse");
 
-  const upload = await axios.post<LlamaParseUploadResponse>(
-    `${LLAMA_PARSE_BASE_URL}/api/v1/files/`,
-    formData,
-    {
-      headers: {
-        ...formData.getHeaders(),
-        Accept: "application/json",
-        Authorization: `Bearer ${apiKey}`,
+  let upload;
+  try {
+    upload = await axios.post<LlamaParseUploadResponse>(
+      `${LLAMA_PARSE_BASE_URL}/api/v1/files/`,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          Accept: "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        maxBodyLength: Infinity,
+        timeout: LLAMA_PARSE_TIMEOUT_MS,
       },
-      maxBodyLength: Infinity,
-      timeout: LLAMA_PARSE_TIMEOUT_MS,
-    },
-  );
+    );
+  } catch (error) {
+    throw new Error(describeLlamaParseError(error));
+  }
 
   const fileId = upload.data.id;
   if (!fileId) throw new Error("LlamaParse upload did not return a file id.");
 
-  const job = await axios.post<LlamaParseJobResponse>(
-    `${LLAMA_PARSE_BASE_URL}/api/v2/parse`,
-    {
-      file_id: fileId,
-      tier: LLAMA_PARSE_TIER,
-      version: LLAMA_PARSE_VERSION,
-    },
-    {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+  let job;
+  try {
+    job = await axios.post<LlamaParseJobResponse>(
+      `${LLAMA_PARSE_BASE_URL}/api/v2/parse`,
+      {
+        file_id: fileId,
+        tier: LLAMA_PARSE_TIER,
+        version: LLAMA_PARSE_VERSION,
       },
-      timeout: LLAMA_PARSE_TIMEOUT_MS,
-    },
-  );
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        timeout: LLAMA_PARSE_TIMEOUT_MS,
+      },
+    );
+  } catch (error) {
+    throw new Error(describeLlamaParseError(error));
+  }
 
   const jobId = job.data.id;
   if (!jobId) throw new Error("LlamaParse did not return a parse job id.");
 
   const startedAt = Date.now();
   while (Date.now() - startedAt < LLAMA_PARSE_TIMEOUT_MS) {
-    const result = await axios.get<LlamaParseResultResponse>(
-      `${LLAMA_PARSE_BASE_URL}/api/v2/parse/${jobId}?expand=markdown,text`,
-      {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${apiKey}`,
+    let result;
+    try {
+      result = await axios.get<LlamaParseResultResponse>(
+        `${LLAMA_PARSE_BASE_URL}/api/v2/parse/${jobId}?expand=markdown_full,text_full`,
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          timeout: LLAMA_PARSE_TIMEOUT_MS,
         },
-        timeout: LLAMA_PARSE_TIMEOUT_MS,
-      },
-    );
+      );
+    } catch (error) {
+      throw new Error(describeLlamaParseError(error));
+    }
 
-    const status = result.data.status?.toUpperCase();
+    const status = result.data.job?.status?.toUpperCase();
     if (status === "COMPLETED" || status === "SUCCESS") {
       const text = extractMarkdownOrText(result.data);
       if (!text || text.length < 20) {
@@ -137,8 +173,10 @@ async function parseWithLlamaParse(
       return text;
     }
 
-    if (status === "FAILED" || status === "ERROR") {
-      throw new Error(result.data.error ?? "LlamaParse failed to parse this file.");
+    if (status === "FAILED" || status === "ERROR" || status === "CANCELLED") {
+      throw new Error(
+        result.data.job?.error_message ?? "LlamaParse failed to parse this file.",
+      );
     }
 
     await new Promise((resolve) =>

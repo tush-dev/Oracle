@@ -112,7 +112,10 @@ const pdf = async (req: Request, res: Response) => {
         text = result.text
         console.log(`✅ Step 1 — Text extracted via ${result.method} (${text.length} chars)`)
       } catch (extractionError: unknown) {
-        console.error("File extraction failed:", extractionError)
+        const extractionMessage = extractionError instanceof Error
+          ? extractionError.message
+          : "Unknown file extraction error"
+        console.error("File extraction failed:", extractionMessage)
         const msg  = extractionError instanceof Error ? extractionError.message : ""
         const safe = msg && !/_KEY|SECRET|TOKEN|password|environment variable/i.test(msg)
         return res.status(422).json({
