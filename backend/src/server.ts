@@ -1,15 +1,15 @@
 import "dotenv/config";
-import express from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import { Router } from "express";
-import multer from "multer";
+import multer, { MulterError } from "multer";
 import test from "./routes/pdf.js";
 import historyRouter from "./routes/history.js";
 import githubAuthRouter from "./routes/githubAuth.js";
 import { requireClerkSession } from "./middleware/requireClerk.js";
 import documentRouter from "./routes/document.js";
 import transcribeRouter from "./routes/transcribe.js";
-import githubRouter from "./routes/github.js";          // ← ADD
+import githubRouter from "./routes/github.js";
 
 const defaultOrigins = [
   "https://advanced-rag-pipeline.vercel.app",
@@ -40,17 +40,37 @@ const upload = multer({
     fileSize: Number(process.env.MAX_UPLOAD_SIZE_BYTES ?? 50 * 1024 * 1024),
   },
 });
-const data = upload.single("File");
+
+const uploadSingle = upload.single("File");
+
+function handleUpload(req: Request, res: Response, next: NextFunction) {
+  uploadSingle(req, res, (err: unknown) => {
+    if (err instanceof MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "File too large. Maximum size is 50 MB." })
+      }
+      if (err.code === "LIMIT_UNEXPECTED_FILE") {
+        return res.status(400).json({ error: `Unexpected field: expected "File"` })
+      }
+      return res.status(400).json({ error: `Upload error: ${err.message}` })
+    }
+    if (err) {
+      console.error("Upload middleware error:", err)
+      return res.status(500).json({ error: "File upload failed." })
+    }
+    next()
+  })
+}
 
 const router1 = Router();
 app.use(router1);
 
-router1.post("/query",           requireClerkSession, data, test);
+router1.post("/query",           requireClerkSession, handleUpload, test);
 router1.use("/history",          historyRouter);
 router1.use("/auth/github",      githubAuthRouter);
 router1.use("/documents",        documentRouter);
 router1.use("/transcribe",       requireClerkSession, transcribeRouter);
-router1.use("/github",           githubRouter);          // ← ADD
+router1.use("/github",           githubRouter);
 
 app.listen(PORT, function (err: unknown) {
   if (err) console.log(err);
