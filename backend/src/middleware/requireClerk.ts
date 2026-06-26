@@ -9,13 +9,14 @@ export async function requireClerkSession(
   res: Response,
   next: NextFunction,
 ) {
-  const secretKey = process.env.CLERK_SECRET_KEY;
+  const secretKey = (process.env.CLERK_SECRET_KEY ?? "").trim();
   if (!secretKey) {
-    console.error("Auth misconfiguration: Clerk secret key is not set");
+    console.error("Auth misconfiguration: Clerk secret key is not set or empty");
     return res.status(500).json({
       error: "Service temporarily unavailable. Please try again later.",
     });
   }
+  console.error("[auth] CLERK_SECRET_KEY prefix:", secretKey.substring(0, 7) + "...");
 
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
@@ -25,6 +26,22 @@ export async function requireClerkSession(
   const token = header.slice("Bearer ".length).trim();
   if (!token) {
     return res.status(401).json({ error: "Sign in required." });
+  }
+
+  const tokenParts = token.split(".");
+  if (tokenParts.length !== 3) {
+    return res.status(401).json({ error: "Invalid token format." });
+  }
+
+  try {
+    const decodedHeader = JSON.parse(
+      Buffer.from(tokenParts[0]!, "base64url").toString("utf-8"),
+    );
+    console.error(
+      "[auth] Token header — alg:", decodedHeader.alg, "kid:", decodedHeader.kid, "typ:", decodedHeader.typ,
+    );
+  } catch {
+    // ignore parse errors
   }
 
   try {
