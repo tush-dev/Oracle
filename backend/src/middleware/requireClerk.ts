@@ -40,7 +40,9 @@ export async function requireClerkSession(
     req.clerkUserId = clerkUserId;
     req.supabaseUserId = supabaseUserId;
     next();
-  } catch {
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Invalid or expired session.";
+    console.error("Clerk token verification failed:", msg);
     return res.status(401).json({ error: "Invalid or expired session." });
   }
 }

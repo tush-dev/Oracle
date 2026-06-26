@@ -11,21 +11,22 @@ import documentRouter from "./routes/document.js";
 import transcribeRouter from "./routes/transcribe.js";
 import githubRouter from "./routes/github.js";          // ← ADD
 
-const defaultOrigins = [
-  "https://oracle-lyart-six.vercel.app",
-  "http://localhost:5173"
-];
-const origins =
-  process.env.FRONTEND_ORIGINS?.split(",")
-    .map((o) => o.trim())
-    .filter(Boolean) ?? defaultOrigins;
-
 const app = express();
 app.use(express.json());
 
 app.use(
   cors({
-    origin: origins,
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      const allowed = [
+        "http://localhost:5173",
+        /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/,
+      ];
+      const ok = allowed.some((a) =>
+        typeof a === "string" ? origin === a : a.test(origin)
+      );
+      cb(null, ok);
+    },
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
