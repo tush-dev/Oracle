@@ -40,9 +40,16 @@ export async function requireClerkSession(
     req.clerkUserId = clerkUserId;
     req.supabaseUserId = supabaseUserId;
     next();
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Invalid or expired session.";
-    console.error("Clerk token verification failed:", msg);
+  } catch (err: unknown) {
+    console.error("Clerk token verification failed — full error:", err);
+    console.error("Clerk token verification failed — type:", typeof err, "isError:", err instanceof Error);
+    if (err instanceof Error) {
+      console.error("Clerk token verification failed — message:", err.message);
+      console.error("Clerk token verification failed — stack:", err.stack);
+      console.error("Clerk token verification failed — cause:", (err as any).cause);
+      console.error("Clerk token verification failed — reason:", (err as any).reason);
+      console.error("Clerk token verification failed — action:", (err as any).action);
+    }
     return res.status(401).json({ error: "Invalid or expired session." });
   }
 }
